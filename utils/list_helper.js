@@ -21,9 +21,25 @@ const favoriteBlog = (blogs) => {
 	}
 }
 
+// function to find the author with most blogs and return the authors name and number of blogs
+
+const mostBlogs = (blogs) => {
+	const reducer = (max, blog) => {
+		return (max.blogs || 0) > blog.blogs ? max : blog
+	}
+	const mostBlogs = blogs.reduce(reducer, {})
+	const blogsByAuthor = blogs.map(blog => blog.author)
+
+	return {
+		author: mostBlogs.author,
+		blogs: blogsByAuthor.filter(author => author === mostBlogs.author).length
+	}
+}
+
 
 module.exports = {
 	dummy,
 	totalLikes,
-	favoriteBlog
+	favoriteBlog,
+	mostBlogs
 }
