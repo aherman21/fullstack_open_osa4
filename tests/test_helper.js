@@ -29,6 +29,13 @@ const blogsInDb = async () => {
 	return blogs.map(blog => blog.toJSON())
 }
 
+// function that checks the blog's id has no underscore
+
+const checkId = (blog) => {
+	expect(blog.id).toBeDefined()
+	expect(blog._id).not.toBeDefined()
+}
+
 module.exports = {
-	initialBlogs, nonExistingId, blogsInDb
+	initialBlogs, nonExistingId, blogsInDb, checkId
 }

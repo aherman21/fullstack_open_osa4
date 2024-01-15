@@ -78,6 +78,17 @@ test('blog without title is not added', async () => {
 	expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
 })
 
+test('blogs id is without underscore', async () => {
+	const response = await api.get('/api/blogs')
+	const blogs = response.body
+	// log the blogs
+	console.log(blogs)
+
+	blogs.forEach(blog => {
+		helper.checkId(blog)
+	})
+})
+
 afterAll(async() => {
 	await mongoose.connection.close()
 })
