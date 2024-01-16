@@ -29,9 +29,6 @@ const blogsInDb = async () => {
 	return blogs.map(blog => blog.toJSON())
 }
 
-//function that checks that the blog has been deleted
-
-
 
 // function that checks the blog's id has no underscore
 

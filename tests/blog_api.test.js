@@ -121,6 +121,20 @@ test('blogs id is without underscore', async () => {
 	})
 })
 
+test('a blog can be updated', async () => {
+	const blogsAtStart = await helper.blogsInDb()
+	const blogToUpdate = blogsAtStart[0]
+
+	await api
+		.put(`/api/blogs/${blogToUpdate.id}`)
+		.send({ likes: 20000 })
+		.expect(200)
+	
+	const blogsAtEnd = await helper.blogsInDb()
+	console.log(blogsAtEnd)
+	expect(blogsAtEnd[0].likes).toBe(20000)
+})
+
 test('a blog can be deleted', async () => {
 	const blogsAtStart = await helper.blogsInDb()
 	const blogToDelete = blogsAtStart[0]
