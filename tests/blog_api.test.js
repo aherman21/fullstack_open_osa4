@@ -54,6 +54,7 @@ test('a valid blog can be added', async () => {
 
 	const blogsAtEnd = await helper.blogsInDb()
 	expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
+	console.log(blogsAtEnd)
 
 	const titles = blogsAtEnd.map(n => n.title)
 	expect(titles).toContain(
@@ -82,7 +83,6 @@ test('blogs id is without underscore', async () => {
 	const response = await api.get('/api/blogs')
 	const blogs = response.body
 	// log the blogs
-	console.log(blogs)
 
 	blogs.forEach(blog => {
 		helper.checkId(blog)
