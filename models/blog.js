@@ -6,7 +6,10 @@ const blogSchema = new mongoose.Schema({
 		required: true
 	},
 	Author: String,
-	url: String,
+	url: {
+		type: String,
+		required: true
+	},
 	likes: Number
 })
 

@@ -78,6 +78,24 @@ test('blog without title is not added', async () => {
 	expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
 })
 
+test('blog without url is not added', async () => {
+	const newBlog = {
+		title: 'async/await simplifies making async calls',
+		author: 'Michael Chan',
+		likes: 7
+
+	}
+
+	await api
+		.post('/api/blogs')
+		.send(newBlog)
+		.expect(400)
+	
+	const blogsAtEnd = await helper.blogsInDb()
+	console.log(blogsAtEnd)
+	expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
+})
+
 test('blog without likes is added with 0 likes', async () => {
 	const newBlog = {
 		title: 'async/await simplifies making async calls',
@@ -92,7 +110,6 @@ test('blog without likes is added with 0 likes', async () => {
 
 	const blogsAtEnd = await helper.blogsInDb()
 	expect(blogsAtEnd[helper.initialBlogs.length].likes).toBe(0)
-	console.log(blogsAtEnd)
 })
 
 test('blogs id is without underscore', async () => {
