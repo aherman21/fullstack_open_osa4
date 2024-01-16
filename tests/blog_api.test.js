@@ -54,7 +54,6 @@ test('a valid blog can be added', async () => {
 
 	const blogsAtEnd = await helper.blogsInDb()
 	expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
-	console.log(blogsAtEnd)
 
 	const titles = blogsAtEnd.map(n => n.title)
 	expect(titles).toContain(
@@ -77,6 +76,23 @@ test('blog without title is not added', async () => {
 	const blogsAtEnd = await helper.blogsInDb()
 
 	expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
+})
+
+test('blog without likes is added with 0 likes', async () => {
+	const newBlog = {
+		title: 'async/await simplifies making async calls',
+		author: 'Michael Chan',
+		url: 'https://reactpatterns.com/'
+	}
+
+	await api
+		.post('/api/blogs')
+		.send(newBlog)
+		.expect(201)
+
+	const blogsAtEnd = await helper.blogsInDb()
+	expect(blogsAtEnd[helper.initialBlogs.length].likes).toBe(0)
+	console.log(blogsAtEnd)
 })
 
 test('blogs id is without underscore', async () => {
