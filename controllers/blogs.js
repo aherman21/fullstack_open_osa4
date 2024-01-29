@@ -4,30 +4,31 @@ const User = require('../models/user')
 
 blogsRouter.get('/', async (request, response) => {
 	const blogs = await Blog.find({})
+		.populate('user', { username: 1, name: 1 })
 	response.json(blogs)
 }
 )
 
-
-blogsRouter.post('/', async (request, response, next) => {
+blogsRouter.post('/', async (request, response) => {
 	const body = request.body
 
-	const user = await User.findById(body.userId)
+	const user = await User.findOne()
 
+	const populatedUser = await User.findById(user._id).populate('blogs', { url: 1, title: 1, author: 1 })
+	console.log(populatedUser)
 	const blog = new Blog({
 		title: body.title,
 		author: body.author,
 		url: body.url,
 		likes: body.likes || 0,
-		user: user._id
+		user: populatedUser._id
 	})
-	try {
-		const savedBlog = await blog.save()
-		response.status(201).json(savedBlog)
-	} catch (exception) {
-		response.status(400).json(exception)
-		next(exception)
-	}
+	const savedBlog = await blog.save()
+
+	populatedUser.blogs = populatedUser.blogs.concat(savedBlog._id)
+	await populatedUser.save()
+
+	response.json(savedBlog)
 })
 
 //updating a blog
