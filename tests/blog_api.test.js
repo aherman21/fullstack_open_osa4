@@ -6,6 +6,7 @@ const blog = require('../models/blog')
 const helper = require('./test_helper')
 const User = require('../models/user')
 const bcrypt = require('bcrypt')
+const { default: test } = require('node:test')
 
 beforeEach(async () => {
 	await blog.deleteMany({})
@@ -208,7 +209,94 @@ describe('when there is initially one user in db', () => {
 		const usersAtEnd = await helper.usersInDb()
 		expect(usersAtEnd).toHaveLength(usersAtStart.length)
 	})
+
+	test('creation fails with proper statuscode and message if username is less than 3 characters', async () => {
+
+		const usersAtStart = await helper.usersInDb()
+
+		const newUser = {
+			username : 'ro',
+			name: 'Superuser',
+			password: 'salainen',
+		}
+
+		const result = await api
+			.post('/api/users')
+			.send(newUser)
+			.expect(400)
+			.expect('Content-Type', /application\/json/)
+		
+		expect(result.body.error).toContain('is shorter than the minimum allowed length (3)')
+
+		const usersAtEnd = await helper.usersInDb()
+		expect(usersAtEnd).toHaveLength(usersAtStart.length)	
+	})
+
+	test('creation fails with proper statuscode and message if username is missing', async () => {
+
+		const usersAtStart = await helper.usersInDb()
+
+		const newUser = {
+			name: 'Superuser',
+			password: 'salainen',
+		}
+
+		const result = await api
+			.post('/api/users')
+			.send(newUser)
+			.expect(400)
+			.expect('Content-Type', /application\/json/)
+		
+		expect(result.body.error).toContain('username missing')
+
+		const usersAtEnd = await helper.usersInDb()
+		expect(usersAtEnd).toHaveLength(usersAtStart.length)
+	})
+
+	test('creation fails with proper statuscode and message if password is less than 3 characters', async () => {
+
+		const usersAtStart = await helper.usersInDb()
+
+		const newUser = {
+			username : 'root',
+			name: 'Superuser',
+			password: 'sa',
+		}
+
+		const result = await api
+			.post('/api/users')
+			.send(newUser)
+			.expect(400)
+			.expect('Content-Type', /application\/json/)
+		
+		expect(result.body.error).toContain('password must be at least 3 characters long')
+
+		const usersAtEnd = await helper.usersInDb()
+		expect(usersAtEnd).toHaveLength(usersAtStart.length)
+	})
+
+	test('creation fails with proper statuscode and message if password is missing', async () => {
+
+		const usersAtStart = await helper.usersInDb()
+
+		const newUser = {
+			username : 'root',
+			name: 'Superuser',
+		}
+
+		const result = await api
+			.post('/api/users')
+			.send(newUser)
+			.expect(400)
+			.expect('Content-Type', /application\/json/)
+
+		expect(result.body.error).toContain('password missing')
+
+		const usersAtEnd = await helper.usersInDb()
+		expect(usersAtEnd).toHaveLength(usersAtStart.length)
+	})
 })
+
 
 afterAll(async() => {
 	await mongoose.connection.close()
