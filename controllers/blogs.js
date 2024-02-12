@@ -14,27 +14,27 @@ blogsRouter.get('/', async (request, response) => {
 blogsRouter.post('/', async (request, response) => {
 	const body = request.body
 	const decodedToken = jwt.verify(request.token, process.env.SECRET)
-	if (!decodedToken.id) {
+	const user = request.user
+
+	if (decodedToken) {
+		const populatedUser = await User.findById(user._id).populate('blogs', { url: 1, title: 1, author: 1 })
+		console.log(populatedUser)
+		const blog = new Blog({
+			title: body.title,
+			author: body.author,
+			url: body.url,
+			likes: body.likes || 0,
+			user: populatedUser._id
+		})
+		const savedBlog = await blog.save()
+
+		populatedUser.blogs = populatedUser.blogs.concat(savedBlog._id)
+		await populatedUser.save()
+
+		response.json(savedBlog)
+	} else {
 		return response.status(401).json({ error: 'token invalid' })
 	}
-	const user = await User.findById(decodedToken.id)
-
-
-	const populatedUser = await User.findById(user._id).populate('blogs', { url: 1, title: 1, author: 1 })
-	console.log(populatedUser)
-	const blog = new Blog({
-		title: body.title,
-		author: body.author,
-		url: body.url,
-		likes: body.likes || 0,
-		user: populatedUser._id
-	})
-	const savedBlog = await blog.save()
-
-	populatedUser.blogs = populatedUser.blogs.concat(savedBlog._id)
-	await populatedUser.save()
-
-	response.json(savedBlog)
 })
 
 //updating a blog
@@ -60,14 +60,16 @@ blogsRouter.delete('/:id', async (request, response, next) => {
 	if (!decodedToken.id) {
 		return response.status(401).json({ error: 'token invalid' })
 	}
-	const user = await User.findById(decodedToken.id)
+	const user = request.user
 	try {
 		const blog = await Blog.findById(request.params.id)
-		if (blog.user.id.toString() === user.id.toString()) {
+		if (blog.user._id.toString() === user._id.toString()) {
 			await Blog
 				.findByIdAndRemove(request.params.id)
 			response.status(204).end()
 		} else {
+			console.log('blogsuserid: ',blog.user._id.toString())
+			console.log('userid: ',user._id.toString())
 			return response.status(401).json({ error: 'unauthorized'})
 		}
 	} catch (error) {
