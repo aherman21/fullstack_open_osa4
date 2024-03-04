@@ -1,7 +1,8 @@
 const blogsRouter = require('express').Router()
 const Blog = require('../models/blog')
 const User = require('../models/user')
-const jwt = require('jsonwebtoken')
+const userExtractor = require('../utils/middleware').userExtractor
+const tokenExtractor = require('../utils/middleware').tokenExtractor
 
 blogsRouter.get('/', async (request, response) => {
 	const blogs = await Blog.find({})
@@ -11,12 +12,11 @@ blogsRouter.get('/', async (request, response) => {
 )
 
 
-blogsRouter.post('/', async (request, response) => {
+blogsRouter.post('/', tokenExtractor, userExtractor, async (request, response) => {
 	const body = request.body
-	const decodedToken = jwt.verify(request.token, process.env.SECRET)
 	const user = request.user
 
-	if (decodedToken) {
+	if (user) {
 		const populatedUser = await User.findById(user._id).populate('blogs', { url: 1, title: 1, author: 1 })
 		console.log(populatedUser)
 		const blog = new Blog({
@@ -26,12 +26,17 @@ blogsRouter.post('/', async (request, response) => {
 			likes: body.likes || 0,
 			user: populatedUser._id
 		})
+		if (!body.title) {
+			return response.status(400).json({ error: 'title missing' })
+		} else if (!body.url) {
+			return response.status(400).json({ error: 'url missing' })
+		}
 		const savedBlog = await blog.save()
 
 		populatedUser.blogs = populatedUser.blogs.concat(savedBlog._id)
 		await populatedUser.save()
 
-		response.json(savedBlog)
+		response.status(201).json(savedBlog)
 	} else {
 		return response.status(401).json({ error: 'token invalid' })
 	}
@@ -55,17 +60,15 @@ blogsRouter.put('/:id', async (request, response, next) => {
 })
 
 //deleting a blog so that only the user who created the blog can delete it and if error occurs, it is passed to the error handler
-blogsRouter.delete('/:id', async (request, response, next) => {
-	const decodedToken = jwt.verify(request.token, process.env.SECRET)
-	if (!decodedToken.id) {
-		return response.status(401).json({ error: 'token invalid' })
-	}
+blogsRouter.delete('/:id', tokenExtractor, userExtractor, async (request, response, next) => {
 	const user = request.user
+	console.log('user: ',user)
 	try {
-		const blog = await Blog.findById(request.params.id)
+		const blog = await Blog.findById(request.params.id).populate('user', { username: 1, name: 1 })
+		console.log('blog: ',blog)
+		console.log('blog.user: ',blog.user)
 		if (blog.user._id.toString() === user._id.toString()) {
-			await Blog
-				.findByIdAndRemove(request.params.id)
+			await Blog.findByIdAndRemove(request.params.id)
 			response.status(204).end()
 		} else {
 			console.log('blogsuserid: ',blog.user._id.toString())
